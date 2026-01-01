@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f1e">
+    <title>Habits - Solo Leveling System</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>HABITS</h1>
+                <p class="subtitle">Daily Rituals</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="habits-page">
+            <!-- Habit Input -->
+            <section class="habit-input-section">
+                <input type="text" id="habitInput" class="habit-input" placeholder="Enter new habit...">
+                <button class="add-habit-btn" id="addHabitBtn">+ ADD HABIT</button>
+            </section>
+
+            <!-- Habit Stats -->
+            <section class="habit-stats">
+                <div class="habit-stat">
+                    <span class="stat-label">Total</span>
+                    <span class="stat-count" id="totalHabits">0</span>
+                </div>
+                <div class="habit-stat">
+                    <span class="stat-label">Completed Today</span>
+                    <span class="stat-count" id="completedToday">0</span>
+                </div>
+            </section>
+
+            <!-- Habits List -->
+            <section class="habits-section">
+                <h3 class="section-title">🔄 YOUR HABITS</h3>
+                <div class="habits-list" id="habitsList">
+                    <p class="empty-state">No habits created yet. Start building a streak!</p>
+                </div>
+            </section>
+
+            <!-- Navigation Menu -->
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-btn" data-page="dashboard">
+                    <span class="nav-icon">⚔️</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="quests.html" class="nav-btn" data-page="quests">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">Quests</span>
+                </a>
+                <a href="habits.html" class="nav-btn active" data-page="habits">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-label">Habits</span>
+                </a>
+                <a href="rewards.html" class="nav-btn" data-page="rewards">
+                    <span class="nav-icon">🎁</span>
+                    <span class="nav-label">Rewards</span>
+                </a>
+                <a href="awakening.html" class="nav-btn" data-page="awakening">
+                    <span class="nav-icon">✨</span>
+                    <span class="nav-label">Awakening</span>
+                </a>
+            </nav>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        let habits = [];
+
+        function loadHabits() {
+            const saved = localStorage.getItem('habits');
+            habits = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveHabits() {
+            localStorage.setItem('habits', JSON.stringify(habits));
+        }
+
+        function getTodayDate() {
+            return new Date().toDateString();
+        }
+
+        function renderHabits() {
+            loadHabits();
+            const habitsList = document.getElementById('habitsList');
+            const today = getTodayDate();
+
+            habitsList.innerHTML = '';
+
+            if (habits.length === 0) {
+                habitsList.innerHTML = '<p class="empty-state">No habits created yet. Start building a streak!</p>';
+            } else {
+                habits.forEach(habit => {
+                    const isCompletedToday = habit.completedDates && habit.completedDates.includes(today);
+                    habitsList.innerHTML += createHabitHTML(habit, isCompletedToday);
+                });
+            }
+
+            updateHabitStats();
+            attachHabitListeners();
+        }
+
+        function createHabitHTML(habit, completedToday) {
+            const statusClass = completedToday ? 'completed-today' : '';
+            const btnText = completedToday ? '✓ Done Today' : '☐ Complete Today';
+            const btnDisabled = completedToday ? 'disabled' : '';
+
+            return `
+                <div class="habit-item ${statusClass}">
+                    <div class="habit-info">
+                        <h4 class="habit-name">${habit.name}</h4>
+                        <p class="habit-streak">🔥 Streak: <span class="streak-count">${habit.streak || 0}</span></p>
+                        <div class="habit-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${habit.streak * 5}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="habit-actions">
+                        <button class="habit-btn check-habit-btn" data-id="${habit.id}" ${btnDisabled}>${btnText}</button>
+                        <button class="habit-btn reset-habit-btn" data-id="${habit.id}">↻ Reset</button>
+                        <button class="habit-btn delete-habit-btn" data-id="${habit.id}">🗑</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHabitStats() {
+            const today = getTodayDate();
+            const completedCount = habits.filter(h => h.completedDates && h.completedDates.includes(today)).length;
+            document.getElementById('totalHabits').textContent = habits.length;
+            document.getElementById('completedToday').textContent = completedCount;
+        }
+
+        function attachHabitListeners() {
+            document.querySelectorAll('.check-habit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    completeHabit(id);
+                });
+            });
+
+            document.querySelectorAll('.reset-habit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    resetHabitStreak(id);
+                });
+            });
+
+            document.querySelectorAll('.delete-habit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    deleteHabit(id);
+                });
+            });
+        }
+
+        function completeHabit(id) {
+            const habit = habits.find(h => h.id === id);
+            if (habit) {
+                const today = getTodayDate();
+                if (!habit.completedDates) habit.completedDates = [];
+
+                if (!habit.completedDates.includes(today)) {
+                    habit.completedDates.push(today);
+                    habit.streak = (habit.streak || 0) + 1;
+
+                    const player = getPlayer();
+                    player.xp += 30;
+                    player.gold += 50;
+                    checkLevelUp();
+                    savePlayer(player);
+
+                    saveHabits();
+                    renderHabits();
+                    alert(`✓ Habit Completed!
++30 XP
++50 Gold
+🔥 Streak: ${habit.streak}`);
+                }
+            }
+        }
+
+        function resetHabitStreak(id) {
+            const habit = habits.find(h => h.id === id);
+            if (habit) {
+                if (confirm(`Reset streak for "${habit.name}"?`)) {
+                    habit.streak = 0;
+                    habit.completedDates = [];
+                    saveHabits();
+                    renderHabits();
+                    alert('Streak reset. Time to rebuild!');
+                }
+            }
+        }
+
+        function deleteHabit(id) {
+            habits = habits.filter(h => h.id !== id);
+            saveHabits();
+            renderHabits();
+        }
+
+        document.getElementById('addHabitBtn').addEventListener('click', () => {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+
+            if (name.length === 0) {
+                alert('Habit name cannot be empty!');
+                return;
+            }
+
+            const newHabit = {
+                id: Date.now(),
+                name: name,
+                streak: 0,
+                completedDates: [],
+                createdAt: new Date().toISOString()
+            };
+
+            habits.push(newHabit);
+            saveHabits();
+            input.value = '';
+            renderHabits();
+            alert(`✓ Habit "${name}" created!`);
+        });
+
+        document.getElementById('habitInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('addHabitBtn').click();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', renderHabits);
+    </script>
+</body>
+</html>

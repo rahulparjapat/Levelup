@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f1e">
+    <meta name="description" content="Solo Leveling System - Life RPG. Level up your life with quests, habits, and rewards.">
+    <title>Solo Leveling System</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230f0f1e'/><text x='50%' y='50%' font-size='120' fill='%23ff6b00' text-anchor='middle' dominant-baseline='central' font-weight='bold'>S</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>SOLO LEVELING</h1>
+                <p class="subtitle">Life RPG System</p>
+            </div>
+            <button class="install-btn" id="installBtn" style="display: none;">📥 INSTALL</button>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Player Card -->
+            <section class="player-card">
+                <div class="rank-badge" id="rankBadge">E</div>
+                <h2 id="playerName">HUNTER</h2>
+                <p class="status-text" id="statusText">Awakening in progress...</p>
+            </section>
+
+            <!-- Stats Grid -->
+            <section class="stats-grid">
+                <div class="stat-box level-stat">
+                    <label>LEVEL</label>
+                    <div class="stat-value" id="levelDisplay">1</div>
+                </div>
+                <div class="stat-box xp-stat">
+                    <label>EXP</label>
+                    <div class="xp-bar">
+                        <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+                    </div>
+                    <span class="xp-text" id="xpText">0 / 100</span>
+                </div>
+                <div class="stat-box gold-stat">
+                    <label>GOLD</label>
+                    <div class="stat-value" id="goldDisplay">0</div>
+                </div>
+                <div class="stat-box streak-stat">
+                    <label>STREAK</label>
+                    <div class="stat-value" id="streakDisplay">0</div>
+                </div>
+            </section>
+
+            <!-- Login Bonus -->
+            <section class="login-bonus">
+                <button class="bonus-btn" id="loginBonusBtn">
+                    📅 DAILY LOGIN BONUS
+                </button>
+                <p class="bonus-info" id="bonusInfo">Last claimed: Never</p>
+            </section>
+
+            <!-- Navigation Menu -->
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-btn active" data-page="dashboard">
+                    <span class="nav-icon">⚔️</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="quests.html" class="nav-btn" data-page="quests">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">Quests</span>
+                </a>
+                <a href="habits.html" class="nav-btn" data-page="habits">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-label">Habits</span>
+                </a>
+                <a href="rewards.html" class="nav-btn" data-page="rewards">
+                    <span class="nav-icon">🎁</span>
+                    <span class="nav-label">Rewards</span>
+                </a>
+                <a href="awakening.html" class="nav-btn" data-page="awakening">
+                    <span class="nav-icon">✨</span>
+                    <span class="nav-label">Awakening</span>
+                </a>
+            </nav>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+
+        // PWA Install prompt
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+        });
+
+        function initializeDashboard() {
+            const player = getPlayer();
+            updateDashboardUI();
+        }
+
+        function updateDashboardUI() {
+            const player = getPlayer();
+            
+            document.getElementById('levelDisplay').textContent = player.level;
+            document.getElementById('goldDisplay').textContent = player.gold;
+            document.getElementById('streakDisplay').textContent = player.streak;
+            document.getElementById('rankBadge').textContent = player.rank;
+            
+            const xpPercent = (player.xp / player.xpForNextLevel) * 100;
+            document.getElementById('xpFill').style.width = xpPercent + '%';
+            document.getElementById('xpText').textContent = `${player.xp} / ${player.xpForNextLevel}`;
+            
+            const lastBonus = localStorage.getItem('lastLoginBonus');
+            const today = new Date().toDateString();
+            if (lastBonus === today) {
+                document.getElementById('bonusInfo').textContent = '✓ Claimed today';
+                document.getElementById('loginBonusBtn').disabled = true;
+            } else {
+                document.getElementById('bonusInfo').textContent = `Last claimed: ${lastBonus || 'Never'}`;
+                document.getElementById('loginBonusBtn').disabled = false;
+            }
+        }
+
+        document.getElementById('loginBonusBtn').addEventListener('click', () => {
+            const player = getPlayer();
+            const bonusXP = 50;
+            const bonusGold = 100;
+            
+            player.xp += bonusXP;
+            player.gold += bonusGold;
+            player.streak += 1;
+            checkLevelUp();
+            savePlayer(player);
+            
+            localStorage.setItem('lastLoginBonus', new Date().toDateString());
+            updateDashboardUI();
+            
+            alert(`✓ Daily Bonus Claimed!
++${bonusXP} XP
++${bonusGold} Gold
++1 Streak`);
+        });
+    </script>
+</body>
+</html>

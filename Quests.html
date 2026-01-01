@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f1e">
+    <title>Quests - Solo Leveling System</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>QUESTS</h1>
+                <p class="subtitle">Guild Missions</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="quests-page">
+            <!-- Quest Input -->
+            <section class="quest-input-section">
+                <input type="text" id="questInput" class="quest-input" placeholder="Enter new quest...">
+                <button class="add-quest-btn" id="addQuestBtn">+ ADD QUEST</button>
+            </section>
+
+            <!-- Quest Stats -->
+            <section class="quest-stats">
+                <div class="quest-stat">
+                    <span class="stat-label">Total</span>
+                    <span class="stat-count" id="totalQuests">0</span>
+                </div>
+                <div class="quest-stat">
+                    <span class="stat-label">Active</span>
+                    <span class="stat-count" id="activeQuests">0</span>
+                </div>
+                <div class="quest-stat">
+                    <span class="stat-label">Completed</span>
+                    <span class="stat-count" id="completedQuests">0</span>
+                </div>
+            </section>
+
+            <!-- Active Quests -->
+            <section class="quests-section">
+                <h3 class="section-title">🟢 ACTIVE QUESTS</h3>
+                <div class="quests-list" id="activeQuestsList">
+                    <p class="empty-state">No active quests. Add one to begin!</p>
+                </div>
+            </section>
+
+            <!-- Completed Quests -->
+            <section class="quests-section">
+                <h3 class="section-title">🟣 COMPLETED QUESTS</h3>
+                <div class="quests-list" id="completedQuestsList">
+                    <p class="empty-state">No completed quests yet.</p>
+                </div>
+            </section>
+
+            <!-- Failed Quests -->
+            <section class="quests-section">
+                <h3 class="section-title">🔴 FAILED QUESTS</h3>
+                <div class="quests-list" id="failedQuestsList">
+                    <p class="empty-state">No failed quests yet.</p>
+                </div>
+            </section>
+
+            <!-- Navigation Menu -->
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-btn" data-page="dashboard">
+                    <span class="nav-icon">⚔️</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="quests.html" class="nav-btn active" data-page="quests">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">Quests</span>
+                </a>
+                <a href="habits.html" class="nav-btn" data-page="habits">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-label">Habits</span>
+                </a>
+                <a href="rewards.html" class="nav-btn" data-page="rewards">
+                    <span class="nav-icon">🎁</span>
+                    <span class="nav-label">Rewards</span>
+                </a>
+                <a href="awakening.html" class="nav-btn" data-page="awakening">
+                    <span class="nav-icon">✨</span>
+                    <span class="nav-label">Awakening</span>
+                </a>
+            </nav>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        let quests = [];
+
+        function loadQuests() {
+            const saved = localStorage.getItem('quests');
+            quests = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveQuests() {
+            localStorage.setItem('quests', JSON.stringify(quests));
+        }
+
+        function renderQuests() {
+            loadQuests();
+            const activeList = document.getElementById('activeQuestsList');
+            const completedList = document.getElementById('completedQuestsList');
+            const failedList = document.getElementById('failedQuestsList');
+
+            activeList.innerHTML = '';
+            completedList.innerHTML = '';
+            failedList.innerHTML = '';
+
+            const active = quests.filter(q => q.status === 'active');
+            const completed = quests.filter(q => q.status === 'completed');
+            const failed = quests.filter(q => q.status === 'failed');
+
+            document.getElementById('totalQuests').textContent = quests.length;
+            document.getElementById('activeQuests').textContent = active.length;
+            document.getElementById('completedQuests').textContent = completed.length;
+
+            if (active.length === 0) {
+                activeList.innerHTML = '<p class="empty-state">No active quests. Add one to begin!</p>';
+            } else {
+                active.forEach(quest => {
+                    activeList.innerHTML += createQuestHTML(quest, 'active');
+                });
+            }
+
+            if (completed.length === 0) {
+                completedList.innerHTML = '<p class="empty-state">No completed quests yet.</p>';
+            } else {
+                completed.forEach(quest => {
+                    completedList.innerHTML += createQuestHTML(quest, 'completed');
+                });
+            }
+
+            if (failed.length === 0) {
+                failedList.innerHTML = '<p class="empty-state">No failed quests yet.</p>';
+            } else {
+                failed.forEach(quest => {
+                    failedList.innerHTML += createQuestHTML(quest, 'failed');
+                });
+            }
+
+            attachQuestListeners();
+        }
+
+        function createQuestHTML(quest, status) {
+            const badge = {
+                active: '🟢',
+                completed: '🟣',
+                failed: '🔴'
+            };
+
+            const xpText = status === 'completed' ? `+${quest.xp} XP` : status === 'failed' ? `-${Math.floor(quest.xp * 0.3)} XP` : '';
+
+            return `
+                <div class="quest-item quest-${status}">
+                    <div class="quest-content">
+                        <h4 class="quest-title">${badge[status]} ${quest.name}</h4>
+                        <p class="quest-xp">${xpText}</p>
+                    </div>
+                    <div class="quest-actions">
+                        ${status === 'active' ? `
+                            <button class="quest-btn complete-btn" data-id="${quest.id}">✓ Complete</button>
+                            <button class="quest-btn fail-btn" data-id="${quest.id}">✗ Fail</button>
+                        ` : status === 'completed' ? `
+                            <button class="quest-btn redo-btn" data-id="${quest.id}">↻ Redo</button>
+                        ` : `
+                            <button class="quest-btn retry-btn" data-id="${quest.id}">↻ Retry</button>
+                        `}
+                        <button class="quest-btn delete-btn" data-id="${quest.id}">🗑</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachQuestListeners() {
+            document.querySelectorAll('.complete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    completeQuest(id);
+                });
+            });
+
+            document.querySelectorAll('.fail-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    failQuest(id);
+                });
+            });
+
+            document.querySelectorAll('.redo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    redoQuest(id);
+                });
+            });
+
+            document.querySelectorAll('.retry-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    retryQuest(id);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    deleteQuest(id);
+                });
+            });
+        }
+
+        function completeQuest(id) {
+            const quest = quests.find(q => q.id === id);
+            if (quest) {
+                quest.status = 'completed';
+                const player = getPlayer();
+                player.xp += quest.xp;
+                player.gold += Math.floor(quest.xp * 0.5);
+                checkLevelUp();
+                savePlayer(player);
+                saveQuests();
+                renderQuests();
+                alert(`✓ Quest Completed!
++${quest.xp} XP
++${Math.floor(quest.xp * 0.5)} Gold`);
+            }
+        }
+
+        function failQuest(id) {
+            const quest = quests.find(q => q.id === id);
+            if (quest) {
+                quest.status = 'failed';
+                const player = getPlayer();
+                const penalty = Math.floor(quest.xp * 0.3);
+                player.xp = Math.max(0, player.xp - penalty);
+                player.streak = Math.max(0, player.streak - 1);
+                savePlayer(player);
+                saveQuests();
+                renderQuests();
+                alert(`✗ Quest Failed!
+-${penalty} XP
+-1 Streak`);
+            }
+        }
+
+        function deleteQuest(id) {
+            quests = quests.filter(q => q.id !== id);
+            saveQuests();
+            renderQuests();
+        }
+
+        function redoQuest(id) {
+            const quest = quests.find(q => q.id === id);
+            if (quest) {
+                quest.status = 'active';
+                saveQuests();
+                renderQuests();
+            }
+        }
+
+        function retryQuest(id) {
+            const quest = quests.find(q => q.id === id);
+            if (quest) {
+                quest.status = 'active';
+                saveQuests();
+                renderQuests();
+            }
+        }
+
+        document.getElementById('addQuestBtn').addEventListener('click', () => {
+            const input = document.getElementById('questInput');
+            const name = input.value.trim();
+
+            if (name.length === 0) {
+                alert('Quest name cannot be empty!');
+                return;
+            }
+
+            const newQuest = {
+                id: Date.now(),
+                name: name,
+                status: 'active',
+                xp: 50,
+                createdAt: new Date().toISOString()
+            };
+
+            quests.push(newQuest);
+            saveQuests();
+            input.value = '';
+            renderQuests();
+        });
+
+        document.getElementById('questInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('addQuestBtn').click();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', renderQuests);
+    </script>
+</body>
+</html>

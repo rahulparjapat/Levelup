@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f1e">
+    <title>Awakening - Solo Leveling System</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>AWAKENING</h1>
+                <p class="subtitle">Vision & Anti-Vision</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="awakening-page">
+            <!-- Vision Section -->
+            <section class="vision-section">
+                <h2 class="section-header">✨ YOUR VISION</h2>
+                <div class="vision-container">
+                    <textarea id="visionInput" class="vision-input" placeholder="What is your ultimate goal? What do you want to achieve?"></textarea>
+                    <button class="save-btn" id="saveVisionBtn">💾 SAVE VISION</button>
+                </div>
+                <div class="vision-display" id="visionDisplay">
+                    <p class="empty-state">No vision set yet. Define your purpose!</p>
+                </div>
+            </section>
+
+            <!-- Anti-Vision Section -->
+            <section class="anti-vision-section">
+                <h2 class="section-header">🚫 YOUR ANTI-VISION</h2>
+                <div class="anti-vision-container">
+                    <textarea id="antiVisionInput" class="anti-vision-input" placeholder="What do you want to avoid? What are your obstacles?"></textarea>
+                    <button class="save-btn" id="saveAntiVisionBtn">💾 SAVE ANTI-VISION</button>
+                </div>
+                <div class="anti-vision-display" id="antiVisionDisplay">
+                    <p class="empty-state">No anti-vision set yet. Define your boundaries!</p>
+                </div>
+            </section>
+
+            <!-- Goals Breakdown -->
+            <section class="goals-section">
+                <h2 class="section-header">🎯 MAJOR MILESTONES</h2>
+                <div class="goals-input">
+                    <input type="text" id="goalInput" class="goal-input" placeholder="Add a milestone...">
+                    <button class="add-goal-btn" id="addGoalBtn">+ ADD</button>
+                </div>
+                <div class="goals-list" id="goalsList">
+                    <p class="empty-state">No milestones yet. Break down your vision!</p>
+                </div>
+            </section>
+
+            <!-- Affirmations -->
+            <section class="affirmations-section">
+                <h2 class="section-header">💪 DAILY AFFIRMATION</h2>
+                <div class="affirmation-display" id="affirmationDisplay">
+                    <p id="dailyAffirmation" class="affirmation-text">You have unlimited potential.</p>
+                    <button class="next-affirmation-btn" id="nextAffirmationBtn">→ Next</button>
+                </div>
+            </section>
+
+            <!-- Navigation Menu -->
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-btn" data-page="dashboard">
+                    <span class="nav-icon">⚔️</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="quests.html" class="nav-btn" data-page="quests">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">Quests</span>
+                </a>
+                <a href="habits.html" class="nav-btn" data-page="habits">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-label">Habits</span>
+                </a>
+                <a href="rewards.html" class="nav-btn" data-page="rewards">
+                    <span class="nav-icon">🎁</span>
+                    <span class="nav-label">Rewards</span>
+                </a>
+                <a href="awakening.html" class="nav-btn active" data-page="awakening">
+                    <span class="nav-icon">✨</span>
+                    <span class="nav-label">Awakening</span>
+                </a>
+            </nav>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        const AFFIRMATIONS = [
+            "You have unlimited potential.",
+            "Every challenge is an opportunity to grow.",
+            "Your dedication will be rewarded.",
+            "Progress over perfection.",
+            "You are stronger than you think.",
+            "Every day is a chance to level up.",
+            "Consistency is the key to success.",
+            "You are the hero of your own story.",
+            "Your hard work will pay off.",
+            "Believe in yourself and your vision.",
+            "Each quest completed makes you stronger.",
+            "Your streak represents your commitment.",
+            "The journey of a thousand miles begins with one step.",
+            "Your vision guides your destiny.",
+            "You are capable of extraordinary things."
+        ];
+
+        let goals = [];
+        let currentAffirmationIndex = 0;
+
+        function loadGoals() {
+            const saved = localStorage.getItem('goals');
+            goals = saved ? JSON.parse(saved) : [];
+        }
+
+        function saveGoals() {
+            localStorage.setItem('goals', JSON.stringify(goals));
+        }
+
+        function loadVision() {
+            const vision = localStorage.getItem('vision') || '';
+            const antiVision = localStorage.getItem('antiVision') || '';
+            
+            document.getElementById('visionInput').value = vision;
+            document.getElementById('antiVisionInput').value = antiVision;
+            
+            renderVisionDisplay();
+            renderAntiVisionDisplay();
+        }
+
+        function renderVisionDisplay() {
+            const vision = localStorage.getItem('vision') || '';
+            const display = document.getElementById('visionDisplay');
+            
+            if (vision.trim()) {
+                display.innerHTML = `
+                    <div class="vision-box">
+                        <p class="vision-text">${vision}</p>
+                        <p class="vision-timestamp">Last updated: ${localStorage.getItem('visionDate') || 'Today'}</p>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = '<p class="empty-state">No vision set yet. Define your purpose!</p>';
+            }
+        }
+
+        function renderAntiVisionDisplay() {
+            const antiVision = localStorage.getItem('antiVision') || '';
+            const display = document.getElementById('antiVisionDisplay');
+            
+            if (antiVision.trim()) {
+                display.innerHTML = `
+                    <div class="anti-vision-box">
+                        <p class="anti-vision-text">${antiVision}</p>
+                        <p class="anti-vision-timestamp">Last updated: ${localStorage.getItem('antiVisionDate') || 'Today'}</p>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = '<p class="empty-state">No anti-vision set yet. Define your boundaries!</p>';
+            }
+        }
+
+        function renderGoals() {
+            loadGoals();
+            const goalsList = document.getElementById('goalsList');
+            
+            if (goals.length === 0) {
+                goalsList.innerHTML = '<p class="empty-state">No milestones yet. Break down your vision!</p>';
+                return;
+            }
+
+            goalsList.innerHTML = goals.map(goal => `
+                <div class="goal-item ${goal.completed ? 'completed-goal' : ''}">
+                    <div class="goal-content">
+                        <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''}>
+                        <span class="goal-text">${goal.text}</span>
+                    </div>
+                    <button class="delete-goal-btn" data-id="${goal.id}">🗑</button>
+                </div>
+            `).join('');
+
+            attachGoalListeners();
+        }
+
+        function attachGoalListeners() {
+            document.querySelectorAll('.goal-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    toggleGoal(id);
+                });
+            });
+
+            document.querySelectorAll('.delete-goal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    deleteGoal(id);
+                });
+            });
+        }
+
+        function toggleGoal(id) {
+            const goal = goals.find(g => g.id === id);
+            if (goal) {
+                goal.completed = !goal.completed;
+                saveGoals();
+                renderGoals();
+            }
+        }
+
+        function deleteGoal(id) {
+            goals = goals.filter(g => g.id !== id);
+            saveGoals();
+            renderGoals();
+        }
+
+        function loadAffirmation() {
+            const saved = localStorage.getItem('currentAffirmation');
+            if (saved) {
+                currentAffirmationIndex = parseInt(saved);
+            }
+            displayAffirmation();
+        }
+
+        function displayAffirmation() {
+            document.getElementById('dailyAffirmation').textContent = AFFIRMATIONS[currentAffirmationIndex];
+        }
+
+        document.getElementById('saveVisionBtn').addEventListener('click', () => {
+            const vision = document.getElementById('visionInput').value.trim();
+            if (vision) {
+                localStorage.setItem('vision', vision);
+                localStorage.setItem('visionDate', new Date().toLocaleDateString());
+                renderVisionDisplay();
+                alert('✓ Vision saved!');
+            } else {
+                alert('Please enter your vision.');
+            }
+        });
+
+        document.getElementById('saveAntiVisionBtn').addEventListener('click', () => {
+            const antiVision = document.getElementById('antiVisionInput').value.trim();
+            if (antiVision) {
+                localStorage.setItem('antiVision', antiVision);
+                localStorage.setItem('antiVisionDate', new Date().toLocaleDateString());
+                renderAntiVisionDisplay();
+                alert('✓ Anti-vision saved!');
+            } else {
+                alert('Please enter your anti-vision.');
+            }
+        });
+
+        document.getElementById('addGoalBtn').addEventListener('click', () => {
+            const input = document.getElementById('goalInput');
+            const text = input.value.trim();
+
+            if (text) {
+                goals.push({
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                });
+                saveGoals();
+                input.value = '';
+                renderGoals();
+            }
+        });
+
+        document.getElementById('goalInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('addGoalBtn').click();
+            }
+        });
+
+        document.getElementById('nextAffirmationBtn').addEventListener('click', () => {
+            currentAffirmationIndex = (currentAffirmationIndex + 1) % AFFIRMATIONS.length;
+            localStorage.setItem('currentAffirmation', currentAffirmationIndex);
+            displayAffirmation();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVision();
+            renderGoals();
+            loadAffirmation();
+        });
+    </script>
+</body>
+</html>
